@@ -7,7 +7,7 @@ use App\Models\Pieza;
 use App\Repositories\Contracts\PiezaRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class PiezaRepository implements PiezaRepositoryInterface
+class EloquentPiezaRepository implements PiezaRepositoryInterface
 {
     public function obtenerPorBloque(Bloque $bloque, array $filtros, int $porPagina): LengthAwarePaginator
     {

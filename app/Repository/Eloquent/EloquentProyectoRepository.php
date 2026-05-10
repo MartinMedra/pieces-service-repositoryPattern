@@ -6,7 +6,7 @@ use App\Models\Proyecto;
 use App\Repositories\Contracts\ProyectoRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class ProyectoRepository implements ProyectoRepositoryInterface
+class EloquentProyectoRepository implements ProyectoRepositoryInterface
 {
     public function __construct(private readonly Proyecto $modelo) {}
 

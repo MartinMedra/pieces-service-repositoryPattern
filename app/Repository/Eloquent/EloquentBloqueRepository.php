@@ -7,7 +7,7 @@ use App\Models\Proyecto;
 use App\Repositories\Contracts\BloqueRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class BloqueRepository implements BloqueRepositoryInterface
+class EloquentBloqueRepository implements BloqueRepositoryInterface
 {
     public function obtenerPorProyecto(Proyecto $proyecto, array $filtros, int $porPagina): LengthAwarePaginator
     {
