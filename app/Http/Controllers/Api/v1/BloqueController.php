@@ -1,43 +1,39 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\Proyecto;
 use App\Models\Bloque;
+use App\Models\Proyecto;
+use App\Repositories\Contracts\BloqueRepositoryInterface;
+use Illuminate\Http\Request;
 
 class BloqueController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    public function __construct(
+        private readonly BloqueRepositoryInterface $repositorio
+    ) {}
+
     public function index(Request $request, Proyecto $proyecto)
     {
-        $consulta = $proyecto->bloques()->withCount('piezas');
-
-        if ($request->filled('buscar')) {
-            $consulta->where('nombre', 'ilike', "%{$request->buscar}%");
-        }
-
-        $bloques = $consulta->paginate($request->input('por_pagina', 15));
+        $bloques = $this->repositorio->obtenerPorProyecto(
+            proyecto:  $proyecto,
+            filtros:   $request->only(['buscar']),
+            porPagina: (int) $request->input('por_pagina', 15)
+        );
 
         return response()->json($bloques);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request, Proyecto $proyecto)
     {
         $datosValidados = $request->validate([
-            'nombre'        => 'required|string|max:255',
-            'descripcion'   => 'nullable|string',
-            'codigo_bloque' => 'required|string|unique:bloques,codigo_bloque',
+            'nombre'        => ['required', 'string', 'max:255'],
+            'descripcion'   => ['nullable', 'string'],
+            'codigo_bloque' => ['required', 'string', 'unique:bloques,codigo_bloque'],
         ]);
 
-        $bloque = $proyecto->bloques()->create($datosValidados);
+        $bloque = $this->repositorio->crear($proyecto, $datosValidados);
 
         return response()->json([
             'mensaje' => 'Bloque creado correctamente.',
@@ -45,47 +41,48 @@ class BloqueController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Proyecto $proyecto, Bloque $bloque)
     {
-        abort_if($bloque->proyecto_id !== $proyecto->id, 404, 'Bloque no encontrado en este proyecto.');
+        abort_if(
+            $bloque->proyecto_id !== $proyecto->id,
+            404,
+            'Bloque no encontrado en este proyecto.'
+        );
 
-        $bloque->load('piezas');
-
-        return response()->json($bloque);
+        return response()->json($bloque->load('piezas'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Proyecto $proyecto, Bloque $bloque)
     {
-        abort_if($bloque->proyecto_id !== $proyecto->id, 404, 'Bloque no encontrado en este proyecto.');
+        abort_if(
+            $bloque->proyecto_id !== $proyecto->id,
+            404,
+            'Bloque no encontrado en este proyecto.'
+        );
 
         $datosValidados = $request->validate([
-            'nombre'        => 'sometimes|string|max:255',
-            'descripcion'   => 'nullable|string',
-            'codigo_bloque' => 'sometimes|string|unique:bloques,codigo_bloque,' . $bloque->id,
+            'nombre'        => ['sometimes', 'string', 'max:255'],
+            'descripcion'   => ['nullable', 'string'],
+            'codigo_bloque' => ['sometimes', 'string', 'unique:bloques,codigo_bloque,' . $bloque->id],
         ]);
 
-        $bloque->update($datosValidados);
+        $bloqueActualizado = $this->repositorio->actualizar($bloque, $datosValidados);
 
         return response()->json([
             'mensaje' => 'Bloque actualizado correctamente.',
-            'bloque'  => $bloque,
+            'bloque'  => $bloqueActualizado,
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Proyecto $proyecto, Bloque $bloque)
     {
-        abort_if($bloque->proyecto_id !== $proyecto->id, 404, 'Bloque no encontrado en este proyecto.');
+        abort_if(
+            $bloque->proyecto_id !== $proyecto->id,
+            404,
+            'Bloque no encontrado en este proyecto.'
+        );
 
-        $bloque->delete();
+        $this->repositorio->eliminar($bloque);
 
         return response()->json([
             'mensaje' => 'Bloque eliminado correctamente.',
