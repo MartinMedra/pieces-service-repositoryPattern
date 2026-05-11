@@ -1,4 +1,4 @@
-# Pieces Service — Prueba Técnica Cotecmar
+# Pieces Service (Repository Pattern) — Prueba Técnica Cotecmar
 
 Microservicio de gestión de producción construido con **Laravel 11**. Administra la jerarquía **Proyecto → Bloque → Pieza** y lleva el registro de fabricación de cada pieza con control de pesos y estados. Todas sus rutas están protegidas por JWT validado localmente, sin depender del Auth Service en tiempo de ejecución.
 
@@ -228,7 +228,7 @@ POST /api/v1/piezas/1/registros
 
 ## Decisiones técnicas
 
-- **Rutas anidadas (`proyectos.bloques`, `bloques.piezas`)**: reflejan fielmente la jerarquía del modelo de datos y evitan que un bloque de otro proyecto sea accedido por error.
+- **Repository Pattern**: los controladores dependen de interfaces (`ProyectoRepositoryInterface`, `BloqueRepositoryInterface`, etc.) y no de Eloquent directamente. Las implementaciones concretas viven en `app/Repositories/Eloquent/`. El `RepositoryServiceProvider` liga cada interfaz con su implementación mediante el contenedor de dependencias de Laravel. Esto permite cambiar el motor de base de datos sin tocar ningún controlador, y facilita el testing con repositorios falsos sin necesitar una BD real.
 - **Columna generada `diferencia_peso`**: calculada por PostgreSQL con `storedAs`, garantizando que el dato nunca pueda ser manipulado desde la aplicación.
 - **`usuario_id` desde el JWT**: el middleware extrae el ID del usuario directamente del payload del token y lo inyecta en la petición, sin consultar la BD del Auth Service.
 - **SoftDeletes en proyectos, bloques y piezas**: los datos no se eliminan físicamente para preservar la trazabilidad histórica de producción.
